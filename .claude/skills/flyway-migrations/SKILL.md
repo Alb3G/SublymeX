@@ -25,7 +25,7 @@ Excepción solo en desarrollo local, cuando solo existe la base de este usuario:
 
 ## Convenciones de esquema
 - Claves primarias: `BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`.
-- Dinero: `NUMERIC(10,2)`. Moneda: `CHAR(3)` (código ISO, p. ej. `EUR`).
+- Dinero: `NUMERIC(10,2)`. Moneda: `VARCHAR(3)` (código ISO, p. ej. `EUR`).
 - Fechas de calendario: `DATE`. Momentos exactos: `TIMESTAMPTZ DEFAULT now()`.
 - Enumerados (ciclo de facturación, estado) como `VARCHAR` con el nombre del enum de Java; valida en la app.
 - Claves foráneas con `ON DELETE CASCADE` cuando el hijo no tiene sentido sin el padre.
