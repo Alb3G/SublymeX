@@ -24,7 +24,7 @@ public class Subscription {
     private BigDecimal price;
 
     @Column(name = "currency")
-    private String currency;
+    private String currency = "EUR";
 
     @Enumerated(EnumType.STRING)
     @Column(name = "billing_cycle")
@@ -38,7 +38,7 @@ public class Subscription {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private SubscriptionStatus status;
+    private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
 
     @Column(name = "trial_ends_on")
     private LocalDate trialEndsOn;
@@ -57,7 +57,7 @@ public class Subscription {
         return userId;
     }
 
-    public void setUser_id(Long userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
