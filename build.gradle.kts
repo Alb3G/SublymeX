@@ -13,6 +13,8 @@ java {
 	}
 }
 
+val mockitoAgent = configurations.create("mockitoAgent");
+
 repositories {
 	mavenCentral()
 }
@@ -39,8 +41,11 @@ dependencies {
 	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
 	testImplementation("org.testcontainers:testcontainers-postgresql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	mockitoAgent("org.mockito:mockito-core") { isTransitive = false }
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	jvmArgs("-javaagent:${mockitoAgent.asPath}")
 }
