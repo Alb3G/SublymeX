@@ -1,1 +1,0 @@
-ALTER TABLE subscriptions ALTER COLUMN currency TYPE VARCHAR(3);
