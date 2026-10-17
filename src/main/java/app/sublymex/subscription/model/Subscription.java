@@ -49,6 +49,8 @@ public class Subscription {
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
+    public Subscription() {}
+
     public Long getId() {
         return id;
     }
