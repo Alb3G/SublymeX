@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,8 +32,8 @@ public class SubscriptionRepositoryTest
     private final SubscriptionRepository subscriptionRepository;
     private final JdbcTemplate jdbcTemplate;
     private final EntityManager entityManager;
-    private Long userId1;
-    private Long userId2;
+    private UUID userId1;
+    private UUID userId2;
     private Subscription subscription1;
     private Subscription subscription2;
     private Subscription subscription3;
@@ -144,17 +145,17 @@ public class SubscriptionRepositoryTest
         assertThat(result3).isEmpty();
     }
 
-    private Long setUpUserReturningId(String email, String passwordHash, String calendarToken)
+    private UUID setUpUserReturningId(String email, String passwordHash, String calendarToken)
     {
         String insertStatement = "INSERT INTO users (email, password_hash, calendar_token) values (?, ?, ?) RETURNING id;";
-        return jdbcTemplate.queryForObject(insertStatement, Long.class,email, passwordHash, calendarToken);
+        return jdbcTemplate.queryForObject(insertStatement, UUID.class,email, passwordHash, calendarToken);
     }
 
     /**
      * Created Subscription only with not null and unique values
      * */
     private Subscription createSubscription(
-            Long userId,
+            UUID userId,
             String name,
             BigDecimal price,
             BillingCycle billingCycle,

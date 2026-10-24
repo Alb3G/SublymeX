@@ -1,0 +1,2 @@
+ALTER TABLE users ALTER COLUMN id TYPE uuid;
+ALTER TABLE subscriptions ALTER COLUMN id TYPE uuid;
