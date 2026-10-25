@@ -7,6 +7,7 @@ import app.sublymex.subscription.model.SubscriptionStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static app.sublymex.subscription.SubscriptionFixtures.aRequest;
 import static app.sublymex.subscription.SubscriptionFixtures.aSavedSubscription;
@@ -15,14 +16,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SubscriptionMapperTest
 {
+    private final UUID userId = UUID.randomUUID();
 
     @Test
     void copiesFieldsFromRequest()
     {
         CreateSubscriptionRequest subscriptionRequest = aRequest();
-        Subscription result = SubscriptionMapper.toSubscription(subscriptionRequest,7L);
+        Subscription result = SubscriptionMapper.toSubscription(subscriptionRequest,userId);
 
-        assertThat(result.getUserId()).isEqualTo(7L);
+        assertThat(result.getUserId()).isEqualTo(userId);
         assertThat(result.getName()).isEqualTo(subscriptionRequest.name());
         assertThat(result.getPrice()).isEqualTo(subscriptionRequest.price());
         assertThat(result.getBillingCycle()).isEqualTo(subscriptionRequest.billingCycle());
@@ -35,7 +37,7 @@ public class SubscriptionMapperTest
     void leavesServiceDecidedFieldsUntouched()
     {
         CreateSubscriptionRequest subscriptionRequest = aRequest();
-        Subscription result = SubscriptionMapper.toSubscription(subscriptionRequest,7L);
+        Subscription result = SubscriptionMapper.toSubscription(subscriptionRequest,userId);
 
         assertThat(result.getId()).isNull();
         assertThat(result.getNextRenewal()).isNull();
@@ -49,7 +51,7 @@ public class SubscriptionMapperTest
         Subscription subscription = aSavedSubscription();
         SubscriptionResponse result = toSubscriptionResponse(subscription);
 
-        assertThat(result.id()).isEqualTo(42L);
+        assertThat(result.id()).isEqualTo(UUID.fromString("b8dbc060-b50b-4570-85b3-74cce65044d6"));
         assertThat(result.name()).isEqualTo(subscription.getName());
         assertThat(result.price()).isEqualTo(subscription.getPrice());
         assertThat(result.currency()).isEqualTo(subscription.getCurrency());

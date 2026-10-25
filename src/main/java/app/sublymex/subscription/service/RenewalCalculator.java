@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit;
 
 public final class RenewalCalculator {
 
-    public RenewalCalculator() {}
+    private RenewalCalculator() {}
 
     public static LocalDate nextRenewal(LocalDate dayOfPayment, BillingCycle subscriptionCycle, LocalDate today)
     {

@@ -9,6 +9,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public final class SubscriptionFixtures
 {
@@ -31,7 +32,7 @@ public final class SubscriptionFixtures
     public static Subscription aSavedSubscription()
     {
         Subscription s = new Subscription();
-        s.setUserId(7L);
+        s.setUserId(UUID.randomUUID());
         s.setName("Spotify");
         s.setPrice(new BigDecimal("9.99"));
         s.setCurrency("USD");
@@ -42,7 +43,7 @@ public final class SubscriptionFixtures
         s.setTrialEndsOn(LocalDate.of(2026, 12, 1));
         s.setNotes("Duo plan");
 
-        ReflectionTestUtils.setField(s, "id", 42L);
+        ReflectionTestUtils.setField(s, "id", UUID.fromString("b8dbc060-b50b-4570-85b3-74cce65044d6"));
         ReflectionTestUtils.setField(s, "createdAt", Instant.parse("2026-10-01T10:00:00Z"));
         return s;
     }

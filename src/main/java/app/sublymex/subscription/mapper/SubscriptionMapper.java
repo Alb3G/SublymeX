@@ -6,6 +6,7 @@ import app.sublymex.subscription.dto.SubscriptionResponse;
 import app.sublymex.subscription.model.Subscription;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class SubscriptionMapper
 {
@@ -17,7 +18,7 @@ public final class SubscriptionMapper
      * besides currency, status and nextRenewal. Those fields are key to the behavior of Subscription feature so the
      * SubscriptionService will be in charge of doing the propper calculations to populate them later.
      * */
-    public static Subscription toSubscription(CreateSubscriptionRequest subscriptionRequest, Long userId)
+    public static Subscription toSubscription(CreateSubscriptionRequest subscriptionRequest, UUID userId)
     {
         Subscription subscription = new Subscription();
         subscription.setUserId(userId);
