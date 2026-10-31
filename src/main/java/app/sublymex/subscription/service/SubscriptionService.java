@@ -3,7 +3,10 @@ package app.sublymex.subscription.service;
 
 import app.sublymex.subscription.dto.CreateSubscriptionRequest;
 import app.sublymex.subscription.dto.SubscriptionResponse;
+import app.sublymex.subscription.dto.UpdateSubscriptionRequest;
+import app.sublymex.subscription.exception.SubscriptionNotFoundException;
 import app.sublymex.subscription.mapper.SubscriptionMapper;
+import app.sublymex.subscription.model.BillingCycle;
 import app.sublymex.subscription.model.Subscription;
 import app.sublymex.subscription.model.SubscriptionStatus;
 import app.sublymex.subscription.model.WarningCode;
@@ -12,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -29,35 +31,71 @@ public class SubscriptionService
         this.clock = clock;
     }
 
-    // Create subscription
     @Transactional
     public SubscriptionResponse create(CreateSubscriptionRequest request, UUID userId)
     {
-        String currency = CurrencyValidator.validate(request.currency());
+        DerivedFields derived = deriveFields(
+                request.currency(), request.nextRenewal(), request.billingCycle(), request.trialEndsOn());
 
         Subscription subscription = SubscriptionMapper.toSubscription(request, userId);
-
-        LocalDate today = LocalDate.ofInstant(clock.instant(), clock.getZone());
-        LocalDate nextRenewal = RenewalCalculator.nextRenewal(request.nextRenewal(), request.billingCycle(), today);
-        SubscriptionStatus status = StatusValidator.statusFor(request.trialEndsOn(), today);
-        List<String> warnings = new ArrayList<>();
-
-        // Generation of warning's list
-        if (nextRenewal.isAfter(request.nextRenewal())) {
-            warnings.add(WarningCode.RENEWAL_ADJUSTED.name());
-        }
-
-        subscription.setCurrency(currency);
-        subscription.setNextRenewal(nextRenewal);
-        subscription.setStatus(status);
+        derived.applyTo(subscription);
 
         Subscription saved = subscriptionRepository.save(subscription);
 
-        return SubscriptionMapper.toSubscriptionResponse(saved, warnings);
+        return SubscriptionMapper.toSubscriptionResponse(saved, derived.warnings());
     }
 
-    // List user's subscriptions
-//    public List<SubscriptionResponse> list(Long userId) {}
-    // Get subscription by ID
-//    public Optional<SubscriptionResponse> getById(Long id, Long userId) {}
+    @Transactional(readOnly = true)
+    public List<SubscriptionResponse> list(UUID userId)
+    {
+        return subscriptionRepository.findByUserIdOrderByNextRenewalAsc(userId).stream()
+                .map(SubscriptionMapper::toSubscriptionResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SubscriptionResponse getById(UUID id, UUID userId) {
+        return subscriptionRepository.findByIdAndUserId(id, userId)
+                .map(SubscriptionMapper::toSubscriptionResponse)
+                .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found for id: " + id));
+    }
+
+    @Transactional
+    public SubscriptionResponse update(UpdateSubscriptionRequest request, UUID id, UUID userId)
+    {
+        Subscription subscription = subscriptionRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found for id: " + id));
+
+        DerivedFields derived = deriveFields(
+                request.currency(), request.nextRenewal(), request.billingCycle(), request.trialEndsOn());
+
+        subscription.setName(request.name());
+        subscription.setPrice(request.price());
+        subscription.setBillingCycle(request.billingCycle());
+        subscription.setCategory(request.category());
+        subscription.setTrialEndsOn(request.trialEndsOn());
+        subscription.setNotes(request.notes());
+        derived.applyTo(subscription);
+
+        return SubscriptionMapper.toSubscriptionResponse(subscription, derived.warnings());
+    }
+
+    private DerivedFields deriveFields(
+            String currency,
+            LocalDate requestedRenewal,
+            BillingCycle billingCycle,
+            LocalDate trialEndsOn
+    )
+    {
+        String validCurrency = CurrencyValidator.validate(currency);
+        LocalDate today = LocalDate.ofInstant(clock.instant(), clock.getZone());
+        LocalDate nextRenewal = RenewalCalculator.nextRenewal(requestedRenewal, billingCycle, today);
+        SubscriptionStatus status = StatusValidator.statusFor(trialEndsOn, today);
+        List<String> warnings = new ArrayList<>();
+
+        if (nextRenewal.isAfter(requestedRenewal)) {
+            warnings.add(WarningCode.RENEWAL_ADJUSTED.name());
+        }
+
+        return new DerivedFields(validCurrency, nextRenewal, status, warnings);
+    }
 }

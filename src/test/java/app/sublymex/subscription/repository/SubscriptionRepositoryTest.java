@@ -34,6 +34,7 @@ public class SubscriptionRepositoryTest
     private final EntityManager entityManager;
     private UUID userId1;
     private UUID userId2;
+    private UUID userId3;
     private Subscription subscription1;
     private Subscription subscription2;
     private Subscription subscription3;
@@ -55,6 +56,8 @@ public class SubscriptionRepositoryTest
     {
         this.userId1 = setUpUserReturningId("testuser1@gmail.com", "hashedpass1", "calendar-token-1");
         this.userId2 = setUpUserReturningId("testuser2@gmail.com", "hashedpass2", "calendar-token-2");
+        this.userId3 = setUpUserReturningId("testuser3@gmail.com", "hashedpass3", "calendar-token-3");
+
 
         this.subscription1 = createSubscription(userId1, "Netflix",
                 new BigDecimal("12.99"),BillingCycle.MONTHLY,
@@ -82,19 +85,22 @@ public class SubscriptionRepositoryTest
     @Test
     void findByUserIdReturnsOnlyThatUsersSubscriptions()
     {
-        List<Subscription> user1Subscriptions = subscriptionRepository.findByUserId(userId1);
-        List<Subscription> user2Subscriptions = subscriptionRepository.findByUserId(userId2);
+        List<Subscription> user1Subscriptions = subscriptionRepository.findByUserIdOrderByNextRenewalAsc(userId1);
+        List<Subscription> user2Subscriptions = subscriptionRepository.findByUserIdOrderByNextRenewalAsc(userId2);
 
         assertThat(user1Subscriptions).hasSize(2);
         assertThat(user1Subscriptions)
                 .extracting(Subscription::getName).containsExactlyInAnyOrder("Netflix", "Spotify");
         assertThat(user1Subscriptions)
-                .extracting(Subscription::getBillingCycle).containsExactlyInAnyOrder(BillingCycle.MONTHLY, BillingCycle.MONTHLY);
+                .extracting(Subscription::getBillingCycle)
+                .containsExactlyInAnyOrder(BillingCycle.MONTHLY, BillingCycle.MONTHLY);
         assertThat(user1Subscriptions).extracting(Subscription::getPrice)
                 .usingElementComparator(new BigDecimalComparator())
                 .contains(new BigDecimal("12.99"), new BigDecimal("10.99"));
-        assertThat(user1Subscriptions).extracting(Subscription::getCurrency).containsExactlyInAnyOrder("EUR", "EUR");
-        assertThat(user1Subscriptions).extracting(Subscription::getStatus).containsExactlyInAnyOrder(SubscriptionStatus.ACTIVE, SubscriptionStatus.ACTIVE);
+        assertThat(user1Subscriptions).extracting(Subscription::getCurrency)
+                .containsExactlyInAnyOrder("EUR", "EUR");
+        assertThat(user1Subscriptions).extracting(Subscription::getStatus)
+                .containsExactlyInAnyOrder(SubscriptionStatus.ACTIVE, SubscriptionStatus.ACTIVE);
 
         assertThat(user2Subscriptions).hasSize(1);
         assertThat(user2Subscriptions).extracting(Subscription::getName)
@@ -105,7 +111,8 @@ public class SubscriptionRepositoryTest
                 .usingElementComparator(new BigDecimalComparator())
                 .contains(new BigDecimal("49.90"));
         assertThat(user2Subscriptions).extracting(Subscription::getCurrency).containsExactlyInAnyOrder("EUR");
-        assertThat(user2Subscriptions).extracting(Subscription::getStatus).containsExactlyInAnyOrder(SubscriptionStatus.ACTIVE);
+        assertThat(user2Subscriptions).extracting(Subscription::getStatus)
+                .containsExactlyInAnyOrder(SubscriptionStatus.ACTIVE);
 
     }
 
@@ -143,6 +150,30 @@ public class SubscriptionRepositoryTest
         assertThat(result1).isEmpty();
         assertThat(result2).isEmpty();
         assertThat(result3).isEmpty();
+    }
+
+    @Test
+    void ordersSubscriptionsByNextRenewalAscending()
+    {
+        // Insertadas desordenadas a propósito: 15 nov, 3 nov, 28 nov
+        createSubscription(userId3, "Middle", new BigDecimal("9.99"), BillingCycle.MONTHLY, LocalDate.of(2026, 11, 15));
+        createSubscription(userId3, "First", new BigDecimal("9.99"), BillingCycle.MONTHLY, LocalDate.of(2026, 11, 3));
+        createSubscription(userId3, "Last", new BigDecimal("9.99"), BillingCycle.MONTHLY, LocalDate.of(2026, 11, 28));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Subscription> result = subscriptionRepository.findByUserIdOrderByNextRenewalAsc(userId3);
+
+        assertThat(result)
+                .extracting(Subscription::getName)
+                .containsExactly("First", "Middle", "Last");
+    }
+
+    @Test
+    void returnsEmptyListWhenUserHasNoSubscriptions()
+    {
+        assertThat(subscriptionRepository.findByUserIdOrderByNextRenewalAsc(userId3)).isEmpty();
     }
 
     private UUID setUpUserReturningId(String email, String passwordHash, String calendarToken)

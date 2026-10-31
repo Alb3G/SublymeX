@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CreateSubscriptionRequest(
-        @NotBlank @Size(max = 255) String name,
+        @NotBlank @Size(max = 120) String name,
         @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal price,
         @Pattern(regexp = "[A-Za-z]{3}") String currency,
         @NotNull BillingCycle billingCycle,
