@@ -233,6 +233,23 @@ class SubscriptionServiceTest {
         assertThat(existing.getPrice()).isEqualByComparingTo("1.00");
     }
 
+    @Test
+    void updateWithPastTrialEndMovesStaleTrialToActive()
+    {
+        Subscription existing = existingSubscription();
+        existing.setTrialEndsOn(LocalDate.of(2026, 10, 1));
+        existing.setStatus(SubscriptionStatus.TRIAL);
+        when(repository.findByIdAndUserId(SUBSCRIPTION_ID, USER_ID)).thenReturn(Optional.of(existing));
+
+        SubscriptionResponse response = service.update(
+                updateRequest(LocalDate.of(2026, 11, 15), "EUR", LocalDate.of(2026, 10, 1)),
+                SUBSCRIPTION_ID, USER_ID);
+
+        assertThat(existing.getStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
+        assertThat(existing.getTrialEndsOn()).isEqualTo(LocalDate.of(2026, 10, 1));
+        assertThat(response.status()).isEqualTo(SubscriptionStatus.ACTIVE);
+    }
+
 // --- Helpers ---
 
     private static Subscription existingSubscription()

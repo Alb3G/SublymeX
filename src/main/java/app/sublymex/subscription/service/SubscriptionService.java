@@ -79,6 +79,14 @@ public class SubscriptionService
         return SubscriptionMapper.toSubscriptionResponse(subscription, derived.warnings());
     }
 
+    @Transactional
+    public void delete(UUID subscriptionId, UUID userId) {
+        Subscription subscription = subscriptionRepository.findByIdAndUserId(subscriptionId, userId)
+                .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found for id: " + subscriptionId));
+
+        subscriptionRepository.delete(subscription);
+    }
+
     private DerivedFields deriveFields(
             String currency,
             LocalDate requestedRenewal,

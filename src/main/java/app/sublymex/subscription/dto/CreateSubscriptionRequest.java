@@ -9,7 +9,7 @@ import java.time.LocalDate;
 public record CreateSubscriptionRequest(
         @NotBlank @Size(max = 120) String name,
         @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal price,
-        @Pattern(regexp = "[A-Za-z]{3}") String currency,
+        @Pattern(regexp = "[A-Za-z]{3}", message = "must be a 3-letter currency code") String currency,
         @NotNull BillingCycle billingCycle,
         @NotNull LocalDate nextRenewal,
         @Size(max = 60) String category,
